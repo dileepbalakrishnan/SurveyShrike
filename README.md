@@ -1,5 +1,5 @@
 # SurveyShrike
-Implementation of a sample survey Implementation of a sample survey application.
+Implementation of a sample survey application.
 
 This application is based on the new Blazor framework from ASP.Net Core team.
 

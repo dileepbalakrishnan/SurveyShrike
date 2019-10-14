@@ -1,0 +1,11 @@
+﻿<h2>@Message</h2>
+
+@code{
+    [CascadingParameter] ModalParameters Parameters { get; set; }
+    string Message { get; set; }
+
+    protected override void OnInitialized()
+    {
+        Message = Parameters.Get<string>("Message");
+    }
+}

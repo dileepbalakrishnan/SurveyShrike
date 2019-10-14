@@ -1,0 +1,137 @@
+﻿@page "/send"
+@using NewBlazor.Data
+@using System.Net.Mail
+@inject SurveyService SurveyServiceInstance
+@inject IModalService Modal
+@inject NavigationManager NavigationManager
+<h3>Select a survey</h3>
+
+@if (Surveys == null)
+{
+    <h2>Loading surveys...</h2>
+}
+else if (!Surveys.Any())
+{
+    <h2>There are no surveys to send. Please create one.</h2>
+}
+else
+{
+    <EditForm Model="@SurveyDispatchInfo">
+        <p>
+            <div class="input-group">
+                <div class="col-xs-3">
+                    <label class="form-control" for="dropdown1">Survey Name:</label>
+                </div>
+                <select id="dropdown1" @bind-value="@SurveyDispatchInfo.SelectedSurvey" @bind-value:event="onchange"
+                        Class="form-control">
+                    @foreach (var survey in Surveys)
+                    {
+                        <option value="@survey.SurveyId">@survey.Title</option>
+                    }
+                </select>
+                <div class="input-group">
+                    <div class="col-xs-2">
+                        <label class="form-control"
+                               for="recipeints">Recipient Email(s):</label>
+                    </div>
+                    <Input type="email" id="recipeints"
+                           @bind-Value="@recipeientEmails" @bind-Value:event="onchange"
+                           Class="form-control">
+                    </Input>
+                </div>
+            </div>
+        </p>
+    </EditForm>
+    <div class="form-group text-center mb-0">
+        <button @onclick="@(e => SendSurvey())"
+                class="btn btn-primary">
+            Send Survey
+        </button>
+    </div>
+
+}
+
+@functions{
+    private List<SurveyInfo> Surveys { get; set; }
+    public SurveyDispatchInfo SurveyDispatchInfo { get; set; } = new SurveyDispatchInfo();
+    private string recipeientEmails = string.Empty;
+    protected async override Task OnInitializedAsync()
+    {
+        Surveys = await SurveyServiceInstance.GetAllSurveyInfosForUserAsync("dileep");
+    }
+
+    private async Task SendSurvey()
+    {
+        if (ValidateDispatchInfo())
+        {
+            await SurveyServiceInstance.SendSurveyAsync(SurveyDispatchInfo);
+            ShowMessage("An email invitation has been sent to recipients.", "Email Sent");
+            NavigationManager.NavigateTo("/");
+        }
+    }
+
+    private bool ValidateDispatchInfo()
+    {
+        if (SurveyDispatchInfo.SelectedSurvey == Guid.Empty)
+        {
+            ShowMessage("Please selct a survey.", "Error");
+            return false;
+        }
+        SurveyDispatchInfo.Title = Surveys.First(s => s.SurveyId == SurveyDispatchInfo.SelectedSurvey).Title;
+        if(!ResolveEmail())
+        {
+            ShowMessage("Please check recipient addresses.", "Error");
+            return false;
+        }
+        return true;
+    }
+
+    private bool ResolveEmail()
+    {
+        if (string.IsNullOrEmpty(recipeientEmails))
+        {
+            return false;
+        }
+        var emails = recipeientEmails.Split(",");
+        foreach (var email in emails)
+        {
+            try
+            {
+                MailAddress m = new MailAddress(email);
+
+            }
+            catch (FormatException)
+            {
+                return false;
+            }
+        }
+        SurveyDispatchInfo.RecipientList.AddRange(emails);
+        return true;
+    }
+
+    public bool IsValid(string emailaddress)
+    {
+        try
+        {
+            MailAddress m = new MailAddress(emailaddress);
+
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+    private void ShowMessage(string message, string title)
+    {
+        Modal.OnClose += PopupClosed;
+        var parameters = new ModalParameters();
+        parameters.Add("Message", message);
+        Modal.Show(title, typeof(Popup), parameters);
+    }
+    void PopupClosed(ModalResult modalResult)
+    {
+        Modal.OnClose -= PopupClosed;
+    }
+
+}

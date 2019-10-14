@@ -1,0 +1,311 @@
+﻿@page "/create"
+@using NewBlazor.Data
+
+@inject IModalService Modal
+@inject SurveyService SurveyServiceInstance
+<EditForm Model="@Survey" OnValidSubmit="@HandleValidSubmit" OnInvalidSubmit="@HandleInvalidSubmit">
+    <h2>Add Survey Details</h2>
+    <p>
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        <div class="form-group">
+            <label for="title">Survey Title:</label>
+            <InputText Class="form-control"
+                       id="title"
+                       @bind-Value="@Survey.Title" />
+            <ValidationMessage For="@(() => Survey.Title)" />
+        </div>
+    </p>
+    <p />
+    <h2>Add Survey Questions</h2>
+    <div class="row">
+        <div class="col">
+            <button class="btn btn-primary"
+                    @onclick="@(e => AddQuestion(AnswerType.SingleLineText))">
+                Add question with one line answer.
+            </button>
+        </div>
+        <div class="col">
+            <button class="btn btn-primary"
+                    @onclick="@(e => AddQuestion(AnswerType.MultiLineText))">
+                Add question with multiple lines answer
+            </button>
+        </div>
+        <div class="col">
+            <button class="btn btn-primary"
+                    @onclick="@(e => AddQuestion(AnswerType.Dropdown))">
+                Add question with answers in drop down
+            </button>
+        </div>
+        <div class="col">
+            <button class="btn btn-primary"
+                    @onclick="@(e => AddQuestion(AnswerType.FileUpload))">
+                Add question with file upload option
+            </button>
+        </div>
+        <div class="col">
+            <button class="btn btn-primary"
+                    @onclick="@(e => AddQuestion(AnswerType.SingleChoice))">
+                Add question with only one answer (radio button)
+            </button>
+        </div>
+        <div class="col">
+            <button class="btn btn-primary"
+                    @onclick="@(e => AddQuestion(AnswerType.MultipleChoice))">
+                Add question with multiple answers (checkbox)
+            </button>
+        </div>
+    </div>
+    <h2>Added Questions</h2>
+    <div class="form-group row">
+        @foreach (var question in Survey.Questions)
+        {
+            switch (question.AnswerType)
+            {
+                case AnswerType.SingleLineText:
+                    <div class="input-group">
+                        <div class="col-xs-3">
+                            <label class="form-control" for="singleline">Question(@question.QuestionNumber):</label>
+                        </div>
+                        <InputText id="singleline"
+                                   @bind-Value="@question.Text"
+                                   Class="form-control">
+                        </InputText>
+                        <ValidationMessage For="@(() => question.Text)" />
+                        <button class="btn-danger"
+                                @onclick="@(e => RemoveQuestion(question))">
+                            Remove
+                        </button>
+                        <br />
+                    </div>
+                    break;
+                case AnswerType.MultiLineText:
+                    <div class="input-group">
+                        <div class="col-xs-3">
+                            <label class="form-control" for="multiline">Question(@question.QuestionNumber):</label>
+                        </div>
+                        <InputText id="multiline"
+                                   @bind-Value="@question.Text"
+                                   Class="form-control">
+                        </InputText>
+                        <button class="btn-danger"
+                                @onclick="@(e => RemoveQuestion(question))">
+                            Remove
+                        </button>
+                        <br />
+                    </div>
+                    break;
+                case AnswerType.Dropdown:
+                    <div class="input-group">
+                        <div class="col-xs-3">
+                            <label class="form-control" for="dropdown">Question(@question.QuestionNumber):</label>
+                        </div>
+                        <InputText id="dropdown"
+                                   @bind-Value="@question.Text"
+                                   Class="form-control">
+                        </InputText>
+                        <button class="btn-danger"
+                                @onclick="@(e => RemoveQuestion(question))">
+                            Remove
+                        </button>
+                    </div>
+                    <div class="input-group">
+                        <div class="col-xs-3">
+                            <label class="form-control"
+                                   for="dropdownvalues">Possible answeres for question(@question.QuestionNumber):</label>
+                            </div>
+                            <InputText id="dropdownvalues"
+                                       @bind-Value="@question.AnswerString"
+                                       Class="form-control">
+                            </InputText>
+                        </div>
+                        <br />
+                        break;
+                    case AnswerType.SingleChoice:
+                        <div class="input-group">
+                            <div class="col-xs-3">
+                                <label class="form-control" for="singleChoice">Question(@question.QuestionNumber):</label>
+                            </div>
+                            <InputText id="singleChoice"
+                                       @bind-Value="@question.Text"
+                                       Class="form-control">
+                            </InputText>
+                            <button class="btn-danger"
+                                    @onclick="@(e => RemoveQuestion(question))">
+                                Remove
+                            </button>
+                        </div>
+                        <div class="input-group">
+                            <div class="col-xs-3">
+                                <label class="form-control"
+                                       for="singleChoiceValues">Possible answeres for question(@question.QuestionNumber):</label>
+                                </div>
+                                <InputText id="singleChoiceValues"
+                                           @bind-Value="@question.AnswerString"
+                                           Class="form-control">
+                                </InputText>
+                            </div>
+                            break;
+                        case AnswerType.MultipleChoice:
+
+                            @*<div class="input-group">
+                                    <div class="col-xs-3">
+                                        <label class="form-control" for="multipleChoice">Question(@question.QuestionNumber):</label>
+                                    </div>
+                                    <InputText id="multipleChoice"
+                                               @bind-Value="@question.Text"
+                                               Class="form-control">
+                                    </InputText>
+                                    <button class="btn-danger"
+                                            @onclick="@(e => RemoveQuestion(question))">
+                                        Remove
+                                    </button>
+                                </div>
+                                <div class="input-group">
+                                    <div class="col-xs-3">
+                                        <label class="form-control"
+                                               for="multipleChoiceValues">Possible answeres for question(@question.QuestionNumber):</label>
+                                        </div>
+                                        <InputText id="multipleChoiceValues"
+                                                   @bind-Value="@question.AnswerString"
+                                                   Class="form-control">
+                                        </InputText>
+                                    </div>*@
+                            break;
+                        case AnswerType.FileUpload:
+                            @*<div class="input-group">
+                                <div class="col-xs-3">
+                                    <label class="form-control" for="fileUpload">Question(@question.QuestionNumber):</label>
+                                </div>
+                                <InputText id="fileUpload"
+                                           @bind-Value="@question.Text"
+                                           Class="form-control">
+                                </InputText>
+                                <button class="btn-danger"
+                                        @onclick="@(e => RemoveQuestion(question))">
+                                    Remove
+                                </button>
+                                <br />
+                            </div>*@
+                            break;
+                        default:
+                            break;
+                    }
+                }
+    </div>
+    <div class="form-group text-center mb-0">
+        <button @onclick="@(e => SaveSurvey())"
+                disabled="@CanSave"
+                class="btn btn-primary">
+            Save Survey
+        </button>
+    </div>
+</EditForm>
+
+@functions
+{
+    private string StatusMessage;
+    private string StatusClass;
+    private async void SaveSurvey()
+    {
+        if (ValidateSurvey())
+        {
+            await SurveyServiceInstance.SaveSurveyAsync(Survey);
+            ShowMessage("Your survey has been saved.", "New Survey");
+            Survey = new Survey() { Creator = "dileep" };
+            StateHasChanged();
+        }
+        else
+        {
+            ShowMessage("There are errors in data. Please check again.", "Error");
+        }
+
+    }
+    private bool ValidateSurvey()
+    {
+        if(Survey == null || (!Survey.Questions.Any()))
+        {
+            return false;
+        }
+        foreach (var question in Survey.Questions.DefaultIfEmpty().Where(q => q.AnswerType == AnswerType.Dropdown ||
+        q.AnswerType == AnswerType.MultipleChoice || q.AnswerType == AnswerType.SingleChoice))
+        {
+            if (string.IsNullOrEmpty(question.AnswerString) || question.AnswerString.Split(new[] { ',' }).Length < 2)
+            {
+                return false;
+            }
+            foreach (var answer in question.AnswerString.Split(new[] { ',' }))
+            {
+                question.PossibleAnswers.Add(new PossibleAnswer { Answer = answer });
+            }
+        }
+        return true;
+    }
+    private bool CanSave
+    {
+        get
+        {
+            return !CanSaveSurvey();
+        }
+    }
+
+    private bool CanSaveSurvey()
+    {
+        if(Survey == null || (!Survey.Questions.Any()))
+        {
+            return false;
+        }
+        return true;
+    }
+    protected void HandleValidSubmit()
+    {
+        StatusClass = "alert-info";
+        //StatusMessage = DateTime.Now + " Handle valid submit";
+    }
+    protected void HandleInvalidSubmit()
+    {
+        StatusClass = "alert-danger";
+        StatusMessage = "Please check for errors.";
+    }
+    private Survey Survey { get; set; } = new Survey() { Creator = "dileep" };
+
+    private void AddQuestion(AnswerType answerType)
+    {
+        if (answerType == AnswerType.MultipleChoice || answerType == AnswerType.FileUpload)
+        {
+            ShowMessage("This type of question is not currently supported.", "Information");
+            return;
+        }
+        SurveyQuestion question = new SurveyQuestion();
+        question.AnswerType = answerType;
+        question.QuestionNumber = Survey.Questions.Select(q => q.QuestionNumber).DefaultIfEmpty().Max() + 1;
+        Survey.Questions.Add(question);
+    }
+
+    private void RemoveQuestion(SurveyQuestion question)
+    {
+        Survey.Questions.Remove(question);
+        ReOrderQuestions();
+    }
+
+    private void ReOrderQuestions()
+    {
+        var counter = 1;
+        foreach (var item in Survey.Questions)
+        {
+            item.QuestionNumber = counter++;
+        }
+    }
+    private void ShowMessage(string message, string title)
+    {
+        Modal.OnClose += PopupClosed;
+        var parameters = new ModalParameters();
+        parameters.Add("Message", message);
+        Modal.Show(title, typeof(Popup), parameters);
+    }
+    void PopupClosed(ModalResult modalResult)
+    {
+        Modal.OnClose -= PopupClosed;
+    }
+}
+

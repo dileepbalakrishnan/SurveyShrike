@@ -1,0 +1,199 @@
+﻿@page "/surveylink"
+@page "/surveylink/{surveyId}"
+@using NewBlazor.Data
+@inject SurveyService SurveyServiceInstance
+@inject IModalService Modal
+@inject NavigationManager NavigationManager
+
+@if (Survey == null || SurveyQuestions == null)
+{
+    <h2>The's no survey with that id !</h2>
+}
+else
+{
+    <h1>Welcome to the survey "@Survey.Title"</h1>
+    <h2>Please answer all questions and click Submit.</h2>
+    <br />
+    <EditForm Model="@SurveyResults">
+        <div class="form-group row">
+            @if (!SurveyResults.Any())
+            {
+                foreach (var question in Survey.Questions)
+                {
+                    SurveyResult surveyResult = new SurveyResult
+                    {
+                        QuestionId = question.Id,
+                        SurveyId = Survey.Id,
+                        Answer = new PossibleAnswer()
+                    };
+                    SurveyResults.Add(surveyResult);
+                }
+            }
+            @foreach (var question in Survey.Questions)
+            {
+                var surveyResult = SurveyResults.First(sr => sr.QuestionId == question.Id);
+                <br>
+                switch (question.AnswerType)
+                {
+                    case AnswerType.SingleLineText:
+                        <div class="input-group">
+                            <div class="col-xs-3">
+                                <label class="form-control" for="singleline">Question(@question.QuestionNumber):@question.Text</label>
+                            </div>
+                            <InputText id="singleline"
+                                       @bind-Value="@surveyResult.Answer.Answer"
+                                       Class="form-control">
+                            </InputText>
+                        </div>
+                        <br>
+                        break;
+                    case AnswerType.MultiLineText:
+                        <div class="input-group">
+                            <div class="col-xs-3">
+                                <label class="form-control" for="multiline">Question(@question.QuestionNumber):@question.Text</label>
+                            </div>
+                            <InputTextArea id="multiline"
+                                           @bind-Value="@surveyResult.Answer.Answer"
+                                           Class="form-control">
+                            </InputTextArea>
+                        </div>
+                        <br>
+                        break;
+                    case AnswerType.Dropdown:
+                        <div class="input-group">
+                            <div class="col-xs-3">
+                                <label class="form-control" for="dropdown1">Question(@question.QuestionNumber):@question.Text</label>
+                            </div>
+                            <select id="dropdown1" @bind-value="@surveyResult.Answer.Answer" @bind-value:event="onchange"
+                                    Class="form-control">
+                                @foreach (var item in question.PossibleAnswers)
+                                {
+                                    <option value="@item.Answer">@item.Answer</option>
+                                }
+                            </select>
+                        </div>
+                        <br>
+                        break;
+                    case AnswerType.SingleChoice:
+                        <div class="input-group">
+                            <div class="col-xs-3">
+                                <label class="form-control" for="singleChoice">Question(@question.QuestionNumber):@question.Text</label>
+                            </div>
+                            @foreach (var item in question.PossibleAnswers)
+                            {
+                                <Input type="radio" name="singleChoice" value="@item.Answer"
+                                       @onchange="(args => surveyResult.Answer.Answer = args.Value.ToString())"
+                                       Class="form-control" />@item.Answer
+                                }
+                        </div>
+                        <br>
+                        break;
+                    case AnswerType.MultipleChoice:
+                        @*<div class="input-group">
+                                <div class="col-xs-3">
+                                    <label class="form-control" for="multipleChoice">Question(@question.QuestionNumber):@question.Text</label>
+                                </div>
+                                @foreach (var item in question.PossibleAnswers)
+                                {
+                                    <Input type="checkbox" name="multipleChoice" id="@item.Answer" value="@item.Answer"
+                                           @onchange="(args => surveyResult.Answer.Answer = args.Value.ToString())"
+                                           Class="form-control" />
+                                }
+                            </div>*@
+                        break;
+                    case AnswerType.FileUpload:
+                        <div class="input-group">
+                            <div class="col-xs-3">
+                                <label class="form-control" for="fileUpload">Question(@question.QuestionNumber):</label>
+                            </div>
+                            <InputText id="fileUpload"
+                                       @bind-Value="@question.Text"
+                                       Class="form-control">
+                            </InputText>
+                            <br />
+                        </div>
+                        <br>
+                        break;
+                    default:
+                        break;
+                }
+            }
+        </div>
+        <br />
+        <div class="form-group text-center mb-0">
+            <button @onclick="@(e => SaveSurvey())"
+                    class="btn btn-primary">
+                Submit
+            </button>
+        </div>
+    </EditForm>
+}
+
+@functions {
+    [Parameter]
+    public string SurveyId
+    {
+        get
+        {
+            return surveyId;
+        }
+        set
+        {
+            surveyId = value;
+        }
+    }
+    private async Task SaveSurvey()
+    {
+        if (ValidateSurveyResults())
+        {
+            await SurveyServiceInstance.SaveSurveyResultsAsync(SurveyResults);
+            NavigationManager.NavigateTo("/confirmation");
+        }
+    }
+
+    private bool ValidateSurveyResults()
+    {
+        var errors = string.Empty;
+        foreach (var result in SurveyResults)
+        {
+            if (string.IsNullOrEmpty(result.Answer.Answer))
+            {
+                errors += SurveyQuestions.First(q => q.Id == result.QuestionId).Text + Environment.NewLine;
+            }
+        }
+        if (!string.IsNullOrEmpty(errors))
+        {
+            ShowMessage(errors, "Please answer all questions");
+            return false;
+        }
+        return true;
+    }
+    private List<SurveyResult> SurveyResults { get; set; } = new List<SurveyResult>();
+    private string surveyId;
+    private Survey Survey { get; set; }
+    private List<SurveyQuestion> SurveyQuestions { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Survey = await SurveyServiceInstance.GetSurveyAsync(new Guid(surveyId));
+        SurveyQuestions = await SurveyServiceInstance.GetSurveyQuestions(new Guid(surveyId));
+        int i = 1;
+        foreach (var question in SurveyQuestions)
+        {
+            question.QuestionNumber = i++;
+        }
+    }
+
+    private void ShowMessage(string message, string title)
+    {
+        Modal.OnClose += PopupClosed;
+        var parameters = new ModalParameters();
+        parameters.Add("Message", message);
+        Modal.Show(title, typeof(Popup), parameters);
+    }
+    void PopupClosed(ModalResult modalResult)
+    {
+        Modal.OnClose -= PopupClosed;
+    }
+
+}

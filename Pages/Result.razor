@@ -1,0 +1,80 @@
+﻿@page "/Result"
+@using NewBlazor.Data
+@inject SurveyService SurveyServiceInstance
+@inject IModalService Modal
+<h3>Survey Results</h3>
+<br />
+@if (Surveys == null)
+{
+    <h2>Loading surveys...</h2>
+}
+else if (!Surveys.Any())
+{
+    <h2>There are no survey results to display.</h2>
+}
+else
+{
+    <EditForm Model="@selectedSurvey">
+        <p>
+            <div class="input-group">
+                <div class="col-xs-3">
+                    <label class="form-control" for="dropdown1">Select Survey:</label>
+                </div>
+                <select @bind-value="selectedSurvey"  @bind-value:event="onchange">
+                    Class="form-control">
+                    @foreach (var survey in Surveys)
+                    {
+                        <option value="@survey.SurveyId">@survey.Title</option>
+                    }
+                </select>
+            </div>
+        </p>
+    </EditForm>
+    <br />
+    <div class="form-group text-center mb-0">
+        <button @onclick="@(e => LoadResults())"
+                class="btn btn-primary">
+            Load Results
+        </button>
+    </div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Survey Id</th>
+                <th>Question</th>
+                <th>Answer</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (surveyResultInfos != null)
+            {
+                @foreach (var surveyResult in surveyResultInfos.Where(s => s.Answer != null))
+                {
+            <tr>
+                <td>@surveyResult.SurveyId</td>
+                <td>@surveyResult.Question</td>
+                <td>@surveyResult.Answer</td>
+            </tr>
+                }
+            }
+        </tbody>
+    </table>
+}
+
+@functions{
+    private List<SurveyInfo> Surveys;
+    private Guid selectedSurvey;
+    private List<SurveyResultInfo> surveyResultInfos;
+    protected async override Task OnInitializedAsync()
+    {
+        Surveys = await SurveyServiceInstance.GetAllSurveyInfosForUserAsync("dileep");
+    }
+
+    private async Task LoadResults()
+    {
+        surveyResultInfos = await SurveyServiceInstance.GetAllResultsInfosForSurvey(selectedSurvey);
+    }
+
+}
+
+

@@ -1,0 +1,98 @@
+﻿@page "/"
+@using NewBlazor.Data
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Linq
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject SurveyService SurveyServiceInstance
+@inject IModalService Modal
+<h1>Your Surveys</h1>
+@if (surveys == null)
+{
+    <p><em>Loading surveys...</em></p>
+}
+else if (surveys.Any())
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Created On</th>
+                <th>Title</th>
+                <th>Details</th>
+                <th>Remove</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var survey in surveys)
+            {
+                <tr>
+                    <td>@survey.DateCreated.ToShortDateString()</td>
+                    @if (survey.Title.Length > 25)
+                    {
+                        <td>@survey.Title.Substring(0, 25)</td>
+                    }
+                    else
+                    {
+                        <td>@survey.Title</td>
+                    }
+                    <td>
+                        <button class="btn-info"
+                                @onclick="@(e => ShowSurveyDetails(survey))">
+                            Details
+                        </button>
+                    </td>
+                    <td>
+                        <button class="btn-danger"
+                                @onclick="@(e => RemoveSurvey(survey.Id))">
+                            Remove
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <h2>There are no surveys to display.</h2>
+}
+
+@functions
+{
+
+    private void ShowSurveyDetails(Survey survey)
+    {
+        var parameters = new ModalParameters();
+        parameters.Add("Survey", survey);
+        Modal.OnClose += ModalClosed;
+        Modal.Show("Survey Details", typeof(SurveyDetails), parameters);
+    }
+    private async void RemoveSurvey(Guid sureveyId)
+    {
+        await SurveyServiceInstance.DeleteSurveyAsync(sureveyId);
+        surveys = await SurveyServiceInstance.GetSurveyForUserAsync("dileep");
+        StateHasChanged();
+    }
+    void ModalClosed(ModalResult modalResult)
+    {
+        Modal.OnClose -= ModalClosed;
+    }
+    List<Survey> surveys;
+    protected override async Task OnInitializedAsync()
+    {
+        surveys = await SurveyServiceInstance.GetSurveyForUserAsync("dileep");
+    }
+    private string GetUsername()
+    {
+        var authState = AuthenticationStateProvider.GetAuthenticationStateAsync().Result;
+        var user = authState.User;
+        return user.Identity.Name;
+        //if (user.Identity.IsAuthenticated)
+        //{
+        //    Console.WriteLine($"{user.Identity.Name} is authenticated.");
+        //}
+        //else
+        //{
+        //    Console.WriteLine("The user is NOT authenticated.");
+        //}
+    }
+}

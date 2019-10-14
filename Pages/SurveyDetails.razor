@@ -1,0 +1,48 @@
+﻿@using NewBlazor.Data
+<br />
+<table class="table">
+    <thead>
+        <tr>
+            <th>Created On</th>
+            <th>Created By</th>
+            <th>Title</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>@Survey.DateCreated.ToShortDateString()</td>
+            <td>@Survey.Creator</td>
+            <td>@Survey.Title</td>
+            <td>@Survey.Id.ToString()</td>
+        </tr>
+    </tbody>
+</table>
+<br />
+<h2>Survey Questions</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Question</th>
+            <th>Type</th>
+            <th>Possible Answer</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var question in Survey.Questions)
+        {
+            <tr>
+                <td>@question.Text</td>
+                <td>@question.AnswerType.ToString()</td>
+                <td>@string.Join(",", question.PossibleAnswers.Select(a => a.Answer))</td>
+            </tr>
+        }
+    </tbody>
+</table>
+@code {
+    [CascadingParameter] ModalParameters Parameters { get; set; }
+    Survey Survey { get; set; }
+    protected override void OnInitialized()
+    {
+        Survey = Parameters.Get<Survey>("Survey");
+    }
+}

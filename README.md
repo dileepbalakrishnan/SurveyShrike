@@ -9,7 +9,7 @@ It uses C# and HTML on the client side. The server side is also in C#.
 
 The persistence mechanism is implemented using Enity Framework Core.
 
-The home pages shows all created surveysapplication.
+The home pages shows all created surveys.
 
 ![66760458-c69f3e80-eebf-11e9-8d31-e717719c81e4](https://user-images.githubusercontent.com/46348569/66770889-5bad3200-eed6-11e9-9606-3da53940962d.png)
 

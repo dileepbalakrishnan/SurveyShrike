@@ -1,6 +1,8 @@
 # SurveyShrike
 Implementation of a sample survey application.
 
+It is currently hosted here : https://surveyshrike.azurewebsites.net
+
 This application is based on the new Blazor framework from ASP.Net Core team.
 
 It uses C# and HTML on the client side. The server side is also in C#.
